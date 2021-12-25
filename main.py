@@ -1,11 +1,21 @@
 import pandas as pd
 import numpy as np
 
+from tkinter import Tk  # from tkinter import Tk for Python 3.x
+from tkinter.filedialog import askopenfilename
+
+
+def path_find():
+    Tk().withdraw()
+    filename = askopenfilename()
+    return filename
+
 
 def parse_data(path):
-    global df, symbol, splited_data, block1, block2, block3, ans,full_target, full_target_df
-    symbol = '*'
+    global df, symbol, splited_data, block1, block2, block3, ans, full_target, full_target_df
+    symbol = ['+', '\'+']
     df = pd.read_excel(path, dtype=str)
+    df.columns = df.columns.str.replace(' ', '')
     df.loc[:, 'digits'] = 0
     splited_data = df["c_response"].str.split("/", n=3, expand=True)
     block1 = splited_data[0]
@@ -17,15 +27,15 @@ def parse_data(path):
     full_target_df = full_target_df.iloc[:, 1:-1]
 
 
-def add_grate(block):
-    add = block.apply(lambda x: 4 if x == '*' else 0)
+def add_great(block):
+    add = block.apply(lambda x: 4 if x in symbol else 0)
     return add
 
 
 def add_exact(b_correct, block, target):
     for i in range(block.shape[0]):
         sum_similer = 0
-        if block[i] == symbol:
+        if block[i] in symbol:
             sum_similer = 4
         else:
             for j in range(len(block[i])):
@@ -41,7 +51,7 @@ def add_rest(b_correct, block, target):
         block_dict = {item: items.count(item) for item in items}
         t_block = [i for i in target[i]]
         for val in block_dict:
-            if val == symbol:
+            if val in symbol:
                 sum_similer = 0
             else:
                 sum_similer += min(block_dict[val], t_block.count(val))
@@ -49,26 +59,27 @@ def add_rest(b_correct, block, target):
 
 
 def n_correct_digits_in_correct_quartet():
-    b1_correct = add_grate(block=block1)
-    b2_correct = add_grate(block=block2)
-    b3_correct = add_grate(block=block3)
+    b1_correct = add_great(block=block1)
+    b2_correct = add_great(block=block2)
+    b3_correct = add_great(block=block3)
     add_rest(b1_correct, block=block1, target=df['target1'])
     add_rest(b2_correct, block=block2, target=df['target2'])
     add_rest(b3_correct, block=block3, target=df['target3'])
-    df['n_correct_digits_in_quartet_1'] = b1_correct
-    df['n_correct_digits_in_quartet_2'] = b2_correct
-    df['n_correct_digits_in_quartet_3'] = b3_correct
-    df['n_correct_digits_in_correct_quartet'] = df[['n_correct_digits_in_quartet_1'
-        , 'n_correct_digits_in_quartet_2'
-        , 'n_correct_digits_in_quartet_3']].astype(int).sum(1)
+    # df['n_correct_digits_in_quartet_1'] = b1_correct
+    # df['n_correct_digits_in_quartet_2'] = b2_correct
+    # df['n_correct_digits_in_quartet_3'] = b3_correct
+    # df['n_correct_digits_in_correct_quartet'] = df[['n_correct_digits_in_quartet_1'
+    #     , 'n_correct_digits_in_quartet_2'
+    #     , 'n_correct_digits_in_quartet_3']].astype(int).sum(1)
+    df['n_correct_digits_in_correct_quartet'] = (b1_correct + b2_correct + b3_correct)
 
     # print(df['n_correct_digits_in_correct_quartet'])
 
 
 def digits():
-    correct = add_grate(block1)
-    correct += add_grate(block2)
-    correct += add_grate(block3)
+    correct = add_great(block1)
+    correct += add_great(block2)
+    correct += add_great(block3)
     add_rest(correct, ans, full_target)
     df['digits'] = correct
 
@@ -90,13 +101,21 @@ def n_correct_digits_oreder_absolute():
     df['n_correct_digits_oreder_absolute'] = count1 + count2 + count3
 
 
+def new_path(path):
+    path = path.split('/')
+    end = "/New_" + path[-1]
+    return "/".join(path[:-1]) + end
+
+
 if __name__ == '__main__':
-    path = "C:\\Users\\elads\\Downloads\\__results same example 2.xlsx"
+    path = path_find()
     parse_data(path)
+
     n_correct_digits_in_correct_quartet()
     digits()
     n_correct_digits_in_incorrect_quartet()
     n_correct_digits_oreder_absolute()
-    path = "C:\\Users\\elads\\Downloads\\__results same example result.xlsx"
-    df.to_excel(path)
-
+    new_path = new_path(path)
+    df.to_excel(new_path)
+    print("conversion of file :\t" + str(path.split('/')[-1]) + "\nnew file is named :\t" + str(new_path.split('/')[-1]))
+    input("press Enter to end")
