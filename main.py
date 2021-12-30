@@ -1,8 +1,12 @@
 import pandas as pd
 import numpy as np
 
-from tkinter import Tk  # from tkinter import Tk for Python 3.x
+from tkinter import Tk
 from tkinter.filedialog import askopenfilename
+
+
+def replace_substring(string, min_loc, max_loc, what_to):
+    return string[0:min_loc] + what_to + string[max_loc + 1:]
 
 
 def path_find():
@@ -44,17 +48,30 @@ def add_exact(b_correct, block, target):
         b_correct[i] = sum_similer
 
 
-def add_rest(b_correct, block, target):
+# func_code 1 -> digits
+# else -> rest
+def add_rest(b_correct, block, target , func_code):
+    t = target.copy()
     for i in range(block.shape[0]):
+        if i == 17:
+            print (" ")
+        if func_code == 1:
+            if len(block1[i]) < 4:
+                t[i] = replace_substring(string=t[i], min_loc=0, max_loc=3, what_to='++++')
+            if len(block2[i]) < 4:
+                t[i] = replace_substring(string=t[i], min_loc=4, max_loc=7, what_to='++++')
+            if len(block3[i]) < 4:
+                t[i] = replace_substring(string=t[i], min_loc=8, max_loc=11, what_to='++++')
+
         sum_similer = 0
         items = [item for item in block[i]]
         block_dict = {item: items.count(item) for item in items}
-        t_block = [i for i in target[i]]
+        t_block = [i for i in t[i]]
         for val in block_dict:
-            if val in symbol:
-                sum_similer = 0
-            else:
+            if val not in symbol:
                 sum_similer += min(block_dict[val], t_block.count(val))
+            if val in symbol:
+                sum_similer += 0
         b_correct.iloc[i] += sum_similer
 
 
@@ -62,9 +79,9 @@ def n_correct_digits_in_correct_quartet():
     b1_correct = add_great(block=block1)
     b2_correct = add_great(block=block2)
     b3_correct = add_great(block=block3)
-    add_rest(b1_correct, block=block1, target=df['target1'])
-    add_rest(b2_correct, block=block2, target=df['target2'])
-    add_rest(b3_correct, block=block3, target=df['target3'])
+    add_rest(b1_correct, block=block1, target=df['target1'],func_code=0)
+    add_rest(b2_correct, block=block2, target=df['target2'],func_code=0)
+    add_rest(b3_correct, block=block3, target=df['target3'],func_code=0)
     # df['n_correct_digits_in_quartet_1'] = b1_correct
     # df['n_correct_digits_in_quartet_2'] = b2_correct
     # df['n_correct_digits_in_quartet_3'] = b3_correct
@@ -80,7 +97,7 @@ def digits():
     correct = add_great(block1)
     correct += add_great(block2)
     correct += add_great(block3)
-    add_rest(correct, ans, full_target)
+    add_rest(correct, ans, full_target,func_code=1)
     df['digits'] = correct
 
 
@@ -117,5 +134,6 @@ if __name__ == '__main__':
     n_correct_digits_oreder_absolute()
     new_path = new_path(path)
     df.to_excel(new_path)
-    print("conversion of file :\t" + str(path.split('/')[-1]) + "\nnew file is named :\t" + str(new_path.split('/')[-1]))
+    print(
+        "conversion of file :\t" + str(path.split('/')[-1]) + "\nnew file is named :\t" + str(new_path.split('/')[-1]))
     input("press Enter to end")
